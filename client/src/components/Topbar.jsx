@@ -2,7 +2,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { FolderSearch, Menu } from "lucide-react";
 import { Button } from "./Button.jsx";
 
-export function Topbar({ title, description, onOpenMenu }) {
+export function Topbar({ title, description, onOpenMenu, statusSlot }) {
   const navigate = useNavigate();
   const location = useLocation();
   const hidePrimaryAction = location.pathname === "/scan";
@@ -19,9 +19,12 @@ export function Topbar({ title, description, onOpenMenu }) {
           <Menu size={20} aria-hidden="true" />
         </button>
         <div>
-          <h1 className="text-[28px] font-semibold leading-tight tracking-tight text-ink">
-            {title}
-          </h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-[28px] font-semibold leading-tight tracking-tight text-ink">
+              {title}
+            </h1>
+            {statusSlot}
+          </div>
           {description ? (
             <p className="mt-1 text-sm text-ink-soft">{description}</p>
           ) : null}

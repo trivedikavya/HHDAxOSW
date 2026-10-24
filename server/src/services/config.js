@@ -34,5 +34,15 @@ export function getConfig() {
       process.env.MAX_SINGLE_FILE_SIZE_BYTES,
       5 * 1024 * 1024
     ),
+
+    // --- Phase 2: AI adapter (Ollama-compatible, local-only) ---
+    // Base URL of a locally running Ollama service. No API key is ever
+    // required or supported for this default local workflow.
+    ollamaBaseUrl: process.env.OLLAMA_BASE_URL?.trim() || "http://localhost:11434",
+    // Default model documented and license-checked in docs/ai-model.md.
+    // Changing this does not trigger any download - see that doc.
+    ollamaModel: process.env.OLLAMA_MODEL?.trim() || "qwen2.5:1.5b",
+    aiRequestTimeoutMs: parsePositiveInt(process.env.AI_REQUEST_TIMEOUT_MS, 20_000),
+    aiStatusTimeoutMs: parsePositiveInt(process.env.AI_STATUS_TIMEOUT_MS, 3_000),
   };
 }

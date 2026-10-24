@@ -25,10 +25,23 @@ export const FINDING_CATEGORIES = [
   "project-metadata",
 ];
 
-export const VERIFIED_BY_VALUES = ["deterministic-rule"];
+/**
+ * "deterministic-rule" is produced by the Phase 1 scanner engine.
+ * "ai-suggestion" is produced by the Phase 2 AI adapter and must never be
+ * used to describe scanner output - the two are kept visually and
+ * structurally distinct everywhere in the app.
+ */
+export const VERIFIED_BY_VALUES = ["deterministic-rule", "ai-suggestion"];
 
 /**
  * Supported project types the scanner can currently detect.
  * "unknown" is a valid, honest outcome when no recognized manifest is found.
  */
 export const PROJECT_TYPES = ["node-javascript", "unknown"];
+
+/**
+ * AI-assigned priority reuses the severity scale rather than introducing
+ * a second, parallel ranking system. The AI may re-order priority within
+ * this scale based on evidence/impact, but cannot invent new levels.
+ */
+export const PRIORITY_LEVELS = SEVERITY_LEVELS;

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { FindingsPage } from "./FindingsPage.jsx";
@@ -73,5 +73,75 @@ describe("FindingsPage", () => {
     await userEvent.click(firstDetailButton);
 
     expect(screen.getByText("Recommendation")).toBeInTheDocument();
+  });
+
+  it("triggers generateInsights with the current scan result when 'Explain with AI' is clicked", async () => {
+    const generateInsights = vi.fn();
+    const scanResult = sampleScanResult();
+    render(
+      renderPageWithProviders(
+        "/findings",
+        <FindingsPage />,
+        { scanResult },
+        { generateInsights }
+      )
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: /explain with ai/i }));
+    expect(generateInsights).toHaveBeenCalledWith(scanResult);
+  });
+
+  it("disables the AI button while insights are being generated", () => {
+    render(
+      renderPageWithProviders(
+        "/findings",
+        <FindingsPage />,
+        { scanResult: sampleScanResult() },
+        { insightStatus: "loading" }
+      )
+    );
+    expect(screen.getByRole("button", { name: /explain with ai/i })).toBeDisabled();
+  });
+
+  it("shows the AI connection status badge", () => {
+    render(
+      renderPageWithProviders(
+        "/findings",
+        <FindingsPage />,
+        { scanResult: sampleScanResult() },
+        { connectionStatus: "available", modelId: "qwen2.5:1.5b" }
+      )
+    );
+    expect(screen.getByText("AI: connected")).toBeInTheDocument();
+  });
+
+  it("renders a generated AI insight inside the expanded finding card", async () => {
+    const scanResult = sampleScanResult();
+    const insight = {
+      findingId: scanResult.findings[0].id,
+      explanation: "A README helps new contributors get started quickly.",
+      priority: "medium",
+      remediationSteps: ["Add a README.md."],
+      verificationSteps: ["Confirm it renders on GitHub."],
+      issueDraft: null,
+      verifiedBy: "ai-suggestion",
+    };
+
+    render(
+      renderPageWithProviders(
+        "/findings",
+        <FindingsPage />,
+        { scanResult },
+        { insightStatus: "ready", insightsByFindingId: { [insight.findingId]: insight } }
+      )
+    );
+
+    const [firstDetailButton] = screen.getAllByRole("button", { name: /view details/i });
+    await userEvent.click(firstDetailButton);
+
+    expect(screen.getByText("AI-generated suggestion")).toBeInTheDocument();
+    expect(
+      screen.getByText("A README helps new contributors get started quickly.")
+    ).toBeInTheDocument();
   });
 });

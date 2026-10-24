@@ -2,8 +2,9 @@ import { useState } from "react";
 import { ChevronDown, ChevronUp, FileText, ShieldCheck } from "lucide-react";
 import { SeverityBadge } from "../../components/SeverityBadge.jsx";
 import { CategoryBadge } from "../../components/CategoryBadge.jsx";
+import { AiInsightSection } from "../ai/AiInsightSection.jsx";
 
-export function FindingCard({ finding }) {
+export function FindingCard({ finding, aiStatus = "idle", aiInsight = null, aiMessage = null }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -68,6 +69,8 @@ export function FindingCard({ finding }) {
             </span>
             <span className="font-mono">{finding.id}</span>
           </div>
+
+          <AiInsightSection aiStatus={aiStatus} aiInsight={aiInsight} aiMessage={aiMessage} />
         </div>
       ) : null}
     </article>

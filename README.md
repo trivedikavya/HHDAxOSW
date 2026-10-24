@@ -9,10 +9,15 @@ itself.
 
 **Product principle: Evidence first. AI second. Human control always.**
 
-> **Current status: Phase 1 — Functional Foundation and Deterministic
-> Repository Scanner.** There is no AI model connected yet. Nothing in
-> this build explains, prioritizes, or drafts anything using AI — see
-> [Scope](#scope--roadmap) below.
+> **Current status: Phase 2 — Open-Weight AI Intelligence.** The
+> deterministic scanner (Phase 1) is complete and works entirely without
+> AI. On top of it, a local, Ollama-compatible AI layer can explain,
+> prioritize, and suggest remediation for findings the scanner already
+> produced — it never invents new findings. See
+> [AI layer (Phase 2)](#ai-layer-phase-2) and
+> [docs/ai-model.md](./docs/ai-model.md) for exactly what model is used,
+> its license, and what was/wasn't live-tested. See
+> [Scope](#scope--roadmap) for what's still ahead in Phase 3.
 
 ## What RepoMedic AI is not
 
@@ -43,9 +48,19 @@ scanner against a small bundled Node.js project, or upload your own
 `.zip` archive.
 
 Copy `.env.example` to `.env` if you want to override any default limit
-(upload size, extracted-size cap, file-count cap, per-file size cap, or
-the port). No real credentials belong in `.env` — Phase 1 has none to
-configure.
+(upload size, extracted-size cap, file-count cap, per-file size cap, the
+port, or the AI model settings below). No real credentials belong in
+`.env` — there is no API key to configure; the AI layer is local-only.
+
+To use the AI layer (optional — the app works fully without it), install
+[Ollama](https://ollama.com) and pull the default model:
+
+```bash
+ollama pull qwen2.5:1.5b
+```
+
+See [docs/ai-model.md](./docs/ai-model.md) for the exact model, its
+license, and more detail.
 
 ### Running tests
 
@@ -73,21 +88,29 @@ repomedic-ai/
   client/             React + Vite + Tailwind CSS SPA
     src/
       components/     Shared UI (Sidebar, Topbar, badges, Button, Toast...)
-      features/       Feature-scoped logic (scan context, upload dropzone, finding card)
+      features/       Feature-scoped logic:
+        scan/            Scan workflow context, upload dropzone
+        findings/        Finding card/list rendering
+        ai/              AI status badge, AI context, AI insight section
       pages/          Route-level pages (Overview, Scan, Findings, Reports, About)
       lib/             API client
       styles/         Tailwind entry + design tokens (@theme)
   server/             Node.js + Express API
     src/
-      routes/          HTTP routes (scan, health)
+      routes/          HTTP routes (scan, ai, health)
       middleware/      Upload (multer) + error handling
       scanner/         The deterministic scanner engine
         rules/          One file per rule + registry (rules/index.js)
         fixtures/        Bundled demo repository
-      services/        Archive safety, scan orchestration, demo repo loader
+      ai/              Model adapter interface + Ollama adapter + prompt
+                       builder + AI response validation (Phase 2)
+      services/        Archive safety, scan orchestration, demo repo
+                       loader, AI insight orchestration
   shared/             Code shared by client and server (npm workspace package)
-    schemas/          Zod schemas: Finding, Evidence, ScanResult, enums
+    schemas/          Zod schemas: Finding, Evidence, ScanResult, AiInsight, enums
     report/           Markdown report generator (single source of truth)
+  docs/
+    ai-model.md       Exact AI model, license, local setup, data handling
 ```
 
 This is an **npm workspaces** monorepo (`client`, `server`, `shared`).
@@ -111,6 +134,12 @@ the API, and the exported report — they are the same code.
 6. The client renders findings, and can generate a Markdown report
    client-side using the same `generateMarkdownReport()` function the
    server package ships (from `@repomedic/shared`).
+7. Optionally, the client calls `POST /api/ai/explain` with that same
+   `ScanResult`. The server builds a bounded prompt from it
+   (`server/src/ai/promptBuilder.js`), asks the configured local Ollama
+   model for JSON matching a strict schema, and validates every insight
+   (`server/src/ai/validateInsightResponse.js`) before returning it. See
+   [AI layer (Phase 2)](#ai-layer-phase-2) below.
 
 ### Adding a new scanner rule
 
@@ -181,14 +210,65 @@ All of the above is covered by automated tests
 ZIPs, path traversal, absolute paths, symlinks, oversized files,
 zip-bomb-style cumulative size, too many files, and duplicate paths.
 
+## AI layer (Phase 2)
+
+The AI layer **interprets existing findings — it never produces new
+ones.** It is entirely optional: every deterministic feature (scanning,
+filtering, search, Markdown export) works identically whether or not
+Ollama is installed or running.
+
+**Architecture:**
+
+- `server/src/ai/modelAdapter.js` documents the adapter interface (any
+  future provider implements the same three methods: `checkStatus()`,
+  `generateJson()`, plus an `id`/`modelId`).
+- `server/src/ai/ollamaAdapter.js` is the only implementation shipped: a
+  local [Ollama](https://ollama.com) adapter. No API key, no remote
+  provider, no paid dependency.
+- `server/src/ai/promptBuilder.js` builds a bounded prompt from the
+  scanner's own sanitized output only (see [docs/ai-model.md](./docs/ai-model.md#data-sent-to-the-model)
+  for exactly what's sent — never raw file contents or secrets).
+- `server/src/ai/validateInsightResponse.js` is the trust boundary: every
+  model response must match a strict schema, reference only finding IDs
+  and file paths that genuinely exist in the original scan, and avoid
+  language that claims the model executed or verified something it
+  didn't. Invalid insights are dropped individually, never crashing the
+  rest of the response.
+- The JSON Schema sent to Ollama's `format` parameter (constraining
+  generation) is derived directly from the same Zod schema used to
+  validate the response (`z.toJSONSchema(AiModelWireResponseSchema)`),
+  so the "ask" and the "check" can never drift apart.
+
+**API:**
+
+- `GET /api/ai/status` — reachability + whether the configured model is
+  installed. Never triggers a download.
+- `POST /api/ai/explain` — body `{ scanResult }`. Always responds
+  `HTTP 200` with a `status` of `"ok" | "unavailable" | "error"` rather
+  than a transport-level failure, so the client can keep the rest of the
+  UI fully usable no matter what happens here.
+
+**UI:** a small, honest connection badge (no fabricated confidence
+scores) next to the Findings page title, an **Explain with AI** action,
+and a clearly distinct purple-accented "AI-generated suggestion" panel
+inside each finding's detail view — visually and structurally separate
+from the deterministic evidence above it, including a "this is a
+suggestion, not a verified fact" disclaimer and an optional
+contributor-ready issue draft with a copy-to-clipboard action.
+
+See **[docs/ai-model.md](./docs/ai-model.md)** for the exact model used,
+its confirmed license, local setup steps, and — importantly — an honest
+account of what was and wasn't live-tested against a real running model
+during development.
+
 ## Scope & roadmap
 
-- **Phase 1 (this build):** deterministic scanner, safe upload, demo
-  repository, findings UI, Markdown export. No AI.
-- **Phase 2 (not started):** Ollama-compatible local model adapter, AI
+- **Phase 1 (complete):** deterministic scanner, safe upload, demo
+  repository, findings UI, Markdown export. Works fully without AI.
+- **Phase 2 (this build):** Ollama-compatible local model adapter, AI
   explanations/prioritization/remediation for existing findings,
   contributor-ready issue drafts, Zod-validated AI responses, graceful
-  fallback when the model is unavailable.
+  fallback when the model is unavailable or its response is malformed.
 - **Phase 3 (not started):** expanded contributor docs, accessibility
   audit, finalized license/attribution, issue/PR templates, polish.
 
@@ -229,6 +309,23 @@ zip-bomb-style cumulative size, too many files, and duplicate paths.
   application itself (the client uses the browser `fetch`/`FormData`
   APIs, which were exercised through the full Vitest + React Testing
   Library suite and the Vite dev server).
+- **No live model call was made during development** (Ollama is not
+  installed in the build environment). The adapter/route/validation
+  logic is tested against mocked HTTP responses matching Ollama's
+  documented API, and the "service unavailable" path was verified live
+  against a genuinely absent Ollama instance. See
+  [docs/ai-model.md](./docs/ai-model.md) for the full, honest account.
+- The fabricated-claim heuristic in `validateInsightResponse.js` (e.g.
+  catching "I ran the tests") is a best-effort quality guard based on
+  common phrasing, not an exhaustive or guaranteed filter — a
+  differently-worded false claim could still pass through. The primary
+  safeguard against invented facts remains the prompt instructions plus
+  the structural checks (unknown finding IDs / unsupported file
+  references are rejected deterministically, not heuristically).
+- AI insights are requested for up to 25 findings per call
+  (`MAX_FINDINGS_PER_REQUEST` in `promptBuilder.js`); a scan with more
+  findings than that will only receive AI insights for the first 25 in
+  the current implementation.
 
 ## License
 

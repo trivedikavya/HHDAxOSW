@@ -81,3 +81,77 @@ export async function scanDemoRepository() {
 
   return body;
 }
+
+/**
+ * Fetches whether the local AI model service is reachable and the
+ * configured model is installed. Resolves to an "unreachable" status
+ * object rather than throwing on a network error, since the AI status
+ * indicator must degrade gracefully by design.
+ * @returns {Promise<{reachable: boolean, modelInstalled: boolean, available: boolean, message: string, modelId: string, adapterId: string}>}
+ */
+export async function fetchAiStatus() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/ai/status`);
+    const body = await parseJsonSafely(response);
+    if (!response.ok || !body) {
+      return {
+        reachable: false,
+        modelInstalled: false,
+        available: false,
+        message: "Could not check the AI model status.",
+        modelId: null,
+        adapterId: null,
+      };
+    }
+    return body;
+  } catch {
+    return {
+      reachable: false,
+      modelInstalled: false,
+      available: false,
+      message: "Could not reach the RepoMedic AI server.",
+      modelId: null,
+      adapterId: null,
+    };
+  }
+}
+
+/**
+ * Requests AI-generated explanations/prioritization/remediation for the
+ * findings in a scan result. Always resolves (never throws) to a result
+ * with a `status` field of "ok" | "unavailable" | "error", mirroring the
+ * server contract, so callers can render a graceful state in every case.
+ * @param {object} scanResult
+ */
+export async function requestAiInsights(scanResult) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/ai/explain`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ scanResult }),
+    });
+    const body = await parseJsonSafely(response);
+
+    if (!response.ok) {
+      return {
+        status: "error",
+        modelId: null,
+        generatedAt: null,
+        insights: [],
+        warnings: [],
+        message: body?.error?.message ?? "The AI request could not be processed.",
+      };
+    }
+
+    return body;
+  } catch {
+    return {
+      status: "unavailable",
+      modelId: null,
+      generatedAt: null,
+      insights: [],
+      warnings: [],
+      message: "Could not reach the RepoMedic AI server.",
+    };
+  }
+}

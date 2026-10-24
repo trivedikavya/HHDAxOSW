@@ -1,12 +1,14 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
-import { Search, FolderSearch, ShieldCheck } from "lucide-react";
+import { Search, FolderSearch, ShieldCheck, BrainCircuit, Loader2 } from "lucide-react";
 import { SEVERITY_LEVELS, FINDING_CATEGORIES } from "@repomedic/shared";
 import { Topbar } from "../components/Topbar.jsx";
 import { Button } from "../components/Button.jsx";
 import { EmptyState } from "../components/EmptyState.jsx";
 import { FindingCard } from "../features/findings/FindingCard.jsx";
 import { useScan } from "../features/scan/ScanContext.jsx";
+import { useAi } from "../features/ai/AiContext.jsx";
+import { AiStatusBadge } from "../features/ai/AiStatusBadge.jsx";
 
 const CATEGORY_LABELS = {
   documentation: "Documentation",
@@ -31,6 +33,13 @@ export function FindingsPage() {
   const { onOpenMenu } = useOutletContext();
   const navigate = useNavigate();
   const { scanResult } = useScan();
+  const {
+    insightStatus,
+    insightsByFindingId,
+    insightMessage,
+    insightWarnings,
+    generateInsights,
+  } = useAi();
 
   const [severityFilter, setSeverityFilter] = useState(new Set());
   const [categoryFilter, setCategoryFilter] = useState(new Set());
@@ -83,10 +92,45 @@ export function FindingsPage() {
         title="Findings"
         description={`${scanResult.repository.name} · ${scanResult.repository.projectType}`}
         onOpenMenu={onOpenMenu}
+        statusSlot={<AiStatusBadge />}
       />
 
       <main className="flex-1 overflow-y-auto px-4 py-6 sm:px-8">
         <div className="mx-auto flex max-w-4xl flex-col gap-5">
+          {findings.length > 0 ? (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-accent/20 bg-accent/5 px-4 py-3">
+              <div className="flex items-start gap-2 text-sm text-ink-soft">
+                <BrainCircuit size={16} className="mt-0.5 shrink-0 text-accent" aria-hidden="true" />
+                <span>
+                  Ask a local AI model to explain, prioritize, and suggest remediation for
+                  these findings. Deterministic results above are never changed by this.
+                </span>
+              </div>
+              <Button
+                variant="secondary"
+                onClick={() => generateInsights(scanResult)}
+                disabled={insightStatus === "loading"}
+              >
+                {insightStatus === "loading" ? (
+                  <Loader2 size={16} className="animate-spin" aria-hidden="true" />
+                ) : (
+                  <BrainCircuit size={16} aria-hidden="true" />
+                )}
+                Explain with AI
+              </Button>
+            </div>
+          ) : null}
+
+          {(insightStatus === "unavailable" || insightStatus === "error") && insightMessage ? (
+            <p className="text-sm text-ink-faint">AI explanation unavailable: {insightMessage}</p>
+          ) : null}
+
+          {insightStatus === "ready" && insightWarnings.length > 0 ? (
+            <p className="text-sm text-ink-faint">
+              {insightWarnings.length} AI suggestion(s) were filtered out during validation.
+            </p>
+          ) : null}
+
           {/* Severity summary counts */}
           <div className="flex flex-wrap gap-2">
             {SEVERITY_LEVELS.map((level) => (
@@ -160,7 +204,13 @@ export function FindingsPage() {
           ) : (
             <div className="flex flex-col gap-3">
               {filteredFindings.map((finding) => (
-                <FindingCard key={finding.id} finding={finding} />
+                <FindingCard
+                  key={finding.id}
+                  finding={finding}
+                  aiStatus={insightStatus}
+                  aiInsight={insightsByFindingId[finding.id] ?? null}
+                  aiMessage={insightMessage}
+                />
               ))}
             </div>
           )}

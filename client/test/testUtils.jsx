@@ -1,5 +1,6 @@
 import { MemoryRouter, Routes, Route, Outlet } from "react-router-dom";
 import { ScanContext } from "../src/features/scan/ScanContext.jsx";
+import { AiContext } from "../src/features/ai/AiContext.jsx";
 import { ToastProvider } from "../src/components/Toast.jsx";
 
 function StubShell() {
@@ -8,11 +9,11 @@ function StubShell() {
 
 /**
  * Renders a page component as it would appear inside the real AppShell
- * route (so useOutletContext() resolves), with a controllable ScanContext
- * value and no real network calls.
+ * route (so useOutletContext() resolves), with controllable ScanContext
+ * and AiContext values and no real network calls.
  */
-export function renderPageWithProviders(path, element, scanContextValue) {
-  const defaultValue = {
+export function renderPageWithProviders(path, element, scanContextValue, aiContextValue) {
+  const defaultScanValue = {
     status: "idle",
     scanResult: null,
     extractionWarnings: [],
@@ -23,16 +24,32 @@ export function renderPageWithProviders(path, element, scanContextValue) {
     ...scanContextValue,
   };
 
+  const defaultAiValue = {
+    connectionStatus: "unknown",
+    connectionMessage: null,
+    modelId: null,
+    checkConnection: () => {},
+    insightStatus: "idle",
+    insightsByFindingId: {},
+    insightMessage: null,
+    insightWarnings: [],
+    generateInsights: () => {},
+    resetInsights: () => {},
+    ...aiContextValue,
+  };
+
   return (
     <ToastProvider>
-      <ScanContext.Provider value={defaultValue}>
-        <MemoryRouter initialEntries={[path]}>
-          <Routes>
-            <Route element={<StubShell />}>
-              <Route path={path} element={element} />
-            </Route>
-          </Routes>
-        </MemoryRouter>
+      <ScanContext.Provider value={defaultScanValue}>
+        <AiContext.Provider value={defaultAiValue}>
+          <MemoryRouter initialEntries={[path]}>
+            <Routes>
+              <Route element={<StubShell />}>
+                <Route path={path} element={element} />
+              </Route>
+            </Routes>
+          </MemoryRouter>
+        </AiContext.Provider>
       </ScanContext.Provider>
     </ToastProvider>
   );
