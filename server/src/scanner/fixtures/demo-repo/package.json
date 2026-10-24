@@ -1,0 +1,12 @@
+{
+  "name": "demo-task-cli",
+  "version": "1.0.0",
+  "description": "A tiny command-line task list manager, bundled with RepoMedic AI as a demonstration fixture.",
+  "main": "src/index.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "node src/index.js",
+    "build": "node scripts/build.js",
+    "lint": "eslint src"
+  }
+}
