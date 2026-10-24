@@ -32,11 +32,11 @@ export function OverviewPage() {
             </p>
 
             <div className="mt-5 flex flex-wrap gap-3">
-              <Button onClick={() => navigate("/scan")}>
+              <Button onClick={() => navigate("/app/scan")}>
                 <Upload size={16} aria-hidden="true" />
                 Upload repository ZIP
               </Button>
-              <Button variant="secondary" onClick={() => navigate("/scan?demo=1")}>
+              <Button variant="secondary" onClick={() => navigate("/app/scan?demo=1")}>
                 <PlayCircle size={16} aria-hidden="true" />
                 Load demo repository
               </Button>
@@ -69,7 +69,7 @@ export function OverviewPage() {
               </p>
               <button
                 type="button"
-                onClick={() => navigate("/findings")}
+                onClick={() => navigate("/app/findings")}
                 className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-accent hover:underline"
               >
                 View findings

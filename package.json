@@ -1,8 +1,8 @@
 {
   "name": "repomedic-ai",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "private": true,
-  "description": "RepoMedic AI - repository onboarding and maintenance assistant (Phase 1: deterministic scanner)",
+  "description": "RepoMedic AI - repository onboarding and maintenance assistant (deterministic scanner + optional local AI layer)",
   "license": "Apache-2.0",
   "type": "module",
   "workspaces": [

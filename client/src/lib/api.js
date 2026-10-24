@@ -1,4 +1,17 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5174";
+/**
+ * Base URL the client sends API requests to.
+ *
+ * - If VITE_API_BASE_URL is explicitly set, it always wins.
+ * - Otherwise, during local `vite dev` (two-terminal workflow: the API
+ *   runs separately on port 5174) we default to that local server.
+ * - In a production build (e.g. deployed on Vercel, where the API is
+ *   served from the same origin as the static site via /api/*), we
+ *   default to an empty string so requests are relative ("/api/...") -
+ *   same-origin, no CORS, no hard-coded deployment URL baked into the
+ *   bundle.
+ */
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? "http://localhost:5174" : "");
 
 /**
  * Thrown for any API-level failure (network error, non-2xx response, or

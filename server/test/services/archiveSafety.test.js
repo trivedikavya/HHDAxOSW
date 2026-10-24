@@ -87,6 +87,39 @@ describe("extractZipSafely", () => {
     );
   });
 
+  it("rejects Windows-style backslash path traversal (..\\..\\evil.txt)", () => {
+    const zip = new AdmZip();
+    zip.addFile("evil.txt", Buffer.from("gotcha"));
+    // Backslashes are normalized to forward slashes before the ".."
+    // segment check runs, so this must be caught the same as the
+    // forward-slash traversal case.
+    zip.getEntries()[0].entryName = "..\\..\\evil.txt";
+    const buffer = zip.toBuffer();
+    expect(() => extractZipSafely(buffer, DEFAULT_LIMITS)).toThrow(
+      ArchiveSafetyError
+    );
+  });
+
+  it("rejects an entry name containing an embedded NUL byte", () => {
+    const zip = new AdmZip();
+    zip.addFile("safe.txt", Buffer.from("fine"));
+    zip.getEntries()[0].entryName = "safe.txt\u0000.jpg";
+    const buffer = zip.toBuffer();
+    expect(() => extractZipSafely(buffer, DEFAULT_LIMITS)).toThrow(
+      ArchiveSafetyError
+    );
+  });
+
+  it("rejects a traversal attempt disguised inside a nested path (a/b/../../../escape.txt)", () => {
+    const zip = new AdmZip();
+    zip.addFile("escape.txt", Buffer.from("gotcha"));
+    zip.getEntries()[0].entryName = "a/b/../../../escape.txt";
+    const buffer = zip.toBuffer();
+    expect(() => extractZipSafely(buffer, DEFAULT_LIMITS)).toThrow(
+      ArchiveSafetyError
+    );
+  });
+
   it("rejects an archive with too many files", () => {
     const entries = [];
     for (let i = 0; i < 5; i += 1) {

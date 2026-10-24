@@ -5,7 +5,7 @@ import { Button } from "./Button.jsx";
 export function Topbar({ title, description, onOpenMenu, statusSlot }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const hidePrimaryAction = location.pathname === "/scan";
+  const hidePrimaryAction = location.pathname === "/app/scan";
 
   return (
     <header className="flex flex-col gap-3 border-b border-border bg-base px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8">
@@ -32,7 +32,7 @@ export function Topbar({ title, description, onOpenMenu, statusSlot }) {
       </div>
 
       {!hidePrimaryAction && (
-        <Button onClick={() => navigate("/scan")}>
+        <Button onClick={() => navigate("/app/scan")}>
           <FolderSearch size={16} aria-hidden="true" />
           Scan Repository
         </Button>

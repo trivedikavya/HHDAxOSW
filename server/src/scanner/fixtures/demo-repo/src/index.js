@@ -1,4 +1,4 @@
-import { addTask, listTasks } from "./taskStore.js";
+import { addTask, completeTask, listTasks } from "./taskStore.js";
 
 const apiKey = process.env.API_KEY;
 const port = process.env.PORT || 3000;
@@ -10,7 +10,8 @@ function main() {
   }
 
   addTask("Write onboarding docs");
-  addTask("Add a test suite");
+  const secondTaskId = addTask("Add a test suite");
+  completeTask(secondTaskId);
 
   console.log(`Demo task CLI ready on port ${port}.`);
   console.log(listTasks());

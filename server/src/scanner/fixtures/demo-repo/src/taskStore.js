@@ -5,6 +5,12 @@ export function addTask(title) {
   return tasks.length - 1;
 }
 
+export function completeTask(index) {
+  if (tasks[index]) {
+    tasks[index].done = true;
+  }
+}
+
 export function listTasks() {
   return [...tasks];
 }

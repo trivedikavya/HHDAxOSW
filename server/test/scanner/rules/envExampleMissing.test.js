@@ -43,4 +43,33 @@ describe("ENV_EXAMPLE_MISSING rule", () => {
     ]);
     expect(rule.evaluate({ snapshot })).toHaveLength(0);
   });
+
+  it("detects bracket-notation access (process.env['FOO'])", () => {
+    const snapshot = buildRepoSnapshot([
+      file("src/index.js", "const key = process.env['API_KEY'];"),
+    ]);
+    const findings = rule.evaluate({ snapshot });
+    expect(findings).toHaveLength(1);
+    expect(findings[0].evidence[0].description).toContain("API_KEY");
+  });
+
+  it("detects double-quoted bracket-notation access (process.env[\"FOO\"])", () => {
+    const snapshot = buildRepoSnapshot([
+      file("src/index.js", 'const key = process.env["API_KEY"];'),
+    ]);
+    const findings = rule.evaluate({ snapshot });
+    expect(findings).toHaveLength(1);
+  });
+
+  it("deduplicates a variable referenced via both dot and bracket notation", () => {
+    const snapshot = buildRepoSnapshot([
+      file(
+        "src/index.js",
+        "const a = process.env.API_KEY; const b = process.env['API_KEY'];"
+      ),
+    ]);
+    const findings = rule.evaluate({ snapshot });
+    expect(findings).toHaveLength(1);
+    expect(findings[0].message).toContain("Found 1 referenced");
+  });
 });

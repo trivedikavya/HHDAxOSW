@@ -17,7 +17,7 @@ export function ScanPage() {
 
   useEffect(() => {
     if (status === "success") {
-      navigate("/findings");
+      navigate("/app/findings");
     }
   }, [status, navigate]);
 

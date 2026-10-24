@@ -73,6 +73,18 @@ describe("POST /api/scan/upload", () => {
     expect(res.body.error.code).toBe("UNSUPPORTED_FORMAT");
   });
 
+  it("accepts an uppercase .ZIP extension (case-insensitive check)", async () => {
+    const app = createApp();
+    const buffer = zipFromFiles([["README.md", "# Repo"]]);
+
+    const res = await request(app)
+      .post("/api/scan/upload")
+      .attach("repository", buffer, "My-Repo.ZIP");
+
+    expect(res.status).toBe(200);
+    expect(res.body.scanResult.repository.name).toBe("My-Repo");
+  });
+
   it("rejects a malformed zip with a safe error message", async () => {
     const app = createApp();
     const res = await request(app)

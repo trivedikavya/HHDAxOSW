@@ -8,7 +8,11 @@
 
 const SOURCE_FILE_EXTENSIONS = /\.(js|jsx|ts|tsx|mjs|cjs)$/i;
 const IGNORED_PATH_SEGMENTS = /(^|\/)(node_modules|\.git|dist|build)\//;
-const ENV_VAR_PATTERN = /process\.env\.([A-Z0-9_]+)/g;
+// Matches both dot access (process.env.FOO) and bracket access
+// (process.env['FOO'] / process.env["FOO"]), since both are common in
+// real-world code.
+const ENV_VAR_PATTERN =
+  /process\.env\.([A-Z0-9_]+)|process\.env\[\s*["']([A-Z0-9_]+)["']\s*\]/g;
 
 const ENV_EXAMPLE_CANDIDATES = [
   ".env.example",
@@ -41,7 +45,8 @@ export const rule = {
       let match;
       ENV_VAR_PATTERN.lastIndex = 0;
       while ((match = ENV_VAR_PATTERN.exec(file.content)) !== null) {
-        referencedVars.add(match[1]);
+        const varName = match[1] ?? match[2];
+        referencedVars.add(varName);
         filesWithReferences.add(file.path);
       }
     }

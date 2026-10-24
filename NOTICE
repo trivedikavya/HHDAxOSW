@@ -1,0 +1,56 @@
+RepoMedic AI
+Copyright (c) the RepoMedic AI contributors.
+
+This product is licensed under the Apache License, Version 2.0.
+See the LICENSE file for the full license text.
+
+================================================================================
+Third-party software
+================================================================================
+
+RepoMedic AI's source code depends on open-source packages installed via
+npm (see package.json / package-lock.json in each workspace for the full,
+exact list and versions). This section highlights the key direct
+dependencies and their licenses, as recorded in each package's own
+package.json at the time of writing:
+
+  React, React DOM, React Router DOM .......... MIT
+  Vite, @vitejs/plugin-react .................. MIT
+  Tailwind CSS, @tailwindcss/vite ............. MIT
+  Vitest, @testing-library/* ................... MIT
+  Lucide React (icons) ......................... ISC
+  Express ....................................... MIT
+  Multer ........................................ MIT
+  adm-zip ....................................... MIT
+  Zod ........................................... MIT
+  cors ........................................... MIT
+  supertest ..................................... MIT
+
+Each of these projects retains its own copyright and license. No
+modified copies of their source code are redistributed as part of this
+repository; they are consumed as standard npm dependencies.
+
+================================================================================
+AI model
+================================================================================
+
+RepoMedic AI's optional local AI layer is designed to work with models
+served through Ollama (https://ollama.com) running on your own machine.
+The default configured model, qwen2.5:1.5b (Qwen2.5, by Alibaba Cloud),
+is licensed under the Apache License, Version 2.0, as published on its
+Ollama library page (https://ollama.com/library/qwen2.5:1.5b) at the time
+of writing. No model weights are bundled with, or distributed by, this
+repository — they are downloaded directly from Ollama's model library by
+the person running RepoMedic AI, under that model's own license.
+
+See docs/ai-model.md for full detail, including what was and wasn't
+independently verified.
+
+================================================================================
+Fonts
+================================================================================
+
+The application UI uses the Inter and JetBrains Mono typefaces, loaded
+from Google Fonts at runtime (not bundled in this repository). Inter is
+licensed under the SIL Open Font License, 1.1. JetBrains Mono is licensed
+under the Apache License, Version 2.0.

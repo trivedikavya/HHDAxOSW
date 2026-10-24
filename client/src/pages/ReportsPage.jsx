@@ -28,7 +28,7 @@ export function ReportsPage() {
             icon={FolderSearch}
             title="No scan results yet"
             description="Scan a repository or load the demo repository before exporting a report."
-            action={<Button onClick={() => navigate("/scan")}>Scan Repository</Button>}
+            action={<Button onClick={() => navigate("/app/scan")}>Scan Repository</Button>}
           />
         </main>
       </>

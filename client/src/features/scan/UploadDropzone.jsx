@@ -4,9 +4,12 @@ import { Button } from "../../components/Button.jsx";
 
 // Client-side display/pre-check only. The server enforces the real limit
 // (MAX_UPLOAD_SIZE_BYTES) independently and must never be trusted to be
-// bypassed by this check.
-const DISPLAY_MAX_SIZE_BYTES = 25 * 1024 * 1024;
-const DISPLAY_MAX_SIZE_LABEL = "25 MB";
+// bypassed by this check. VITE_MAX_UPLOAD_SIZE_MB lets a deployment
+// advertise a different (e.g. smaller, for serverless body-size limits)
+// value than the local-dev default without editing this file.
+const DISPLAY_MAX_SIZE_MB = Number(import.meta.env.VITE_MAX_UPLOAD_SIZE_MB) || 25;
+const DISPLAY_MAX_SIZE_BYTES = DISPLAY_MAX_SIZE_MB * 1024 * 1024;
+const DISPLAY_MAX_SIZE_LABEL = `${DISPLAY_MAX_SIZE_MB} MB`;
 
 function formatBytes(bytes) {
   if (bytes < 1024) return `${bytes} B`;

@@ -10,3 +10,4 @@ Thumbs.db
 .vite/
 tmp/
 server/.tmp-uploads/
+.vercel

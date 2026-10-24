@@ -62,6 +62,27 @@ describe("FindingsPage", () => {
     expect(screen.queryByText("Repository README is missing")).not.toBeInTheDocument();
   });
 
+  it("exposes severity and category filters as accessible toggle buttons (not color-only)", async () => {
+    render(
+      renderPageWithProviders("/findings", <FindingsPage />, {
+        scanResult: sampleScanResult(),
+      })
+    );
+
+    const mediumFilter = screen.getByRole("button", {
+      name: /filter by medium severity/i,
+    });
+    expect(mediumFilter).toHaveAttribute("aria-pressed", "false");
+
+    await userEvent.click(mediumFilter);
+    expect(mediumFilter).toHaveAttribute("aria-pressed", "true");
+
+    const categoryFilter = screen.getByRole("button", { name: "Documentation" });
+    expect(categoryFilter).toHaveAttribute("aria-pressed", "false");
+    await userEvent.click(categoryFilter);
+    expect(categoryFilter).toHaveAttribute("aria-pressed", "true");
+  });
+
   it("expands a finding to reveal evidence and recommendation", async () => {
     render(
       renderPageWithProviders("/findings", <FindingsPage />, {

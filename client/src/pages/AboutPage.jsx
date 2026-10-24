@@ -37,10 +37,13 @@ export function AboutPage() {
           <section>
             <h2 className="text-lg font-semibold text-ink">Current phase</h2>
             <p className="mt-2">
-              This build is <strong className="text-ink">Phase 1</strong>: a
-              deterministic scanner only. No AI model is connected yet, and
-              no explanation, prioritization, or issue draft shown anywhere
-              in the app is AI-generated.
+              The deterministic scanner (findings, evidence, reports) works
+              fully on its own. An optional local AI layer can explain and
+              prioritize those same findings using a model you run yourself
+              with <a className="text-accent underline" href="https://ollama.com" target="_blank" rel="noreferrer">Ollama</a> &mdash;
+              it never invents new findings, and everything keeps working if
+              the AI model isn&apos;t available. See the &ldquo;AI: connected / unavailable&rdquo;
+              badge on the Findings page.
             </p>
           </section>
         </div>

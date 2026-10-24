@@ -9,15 +9,35 @@ itself.
 
 **Product principle: Evidence first. AI second. Human control always.**
 
-> **Current status: Phase 2 — Open-Weight AI Intelligence.** The
-> deterministic scanner (Phase 1) is complete and works entirely without
-> AI. On top of it, a local, Ollama-compatible AI layer can explain,
-> prioritize, and suggest remediation for findings the scanner already
-> produced — it never invents new findings. See
-> [AI layer (Phase 2)](#ai-layer-phase-2) and
-> [docs/ai-model.md](./docs/ai-model.md) for exactly what model is used,
-> its license, and what was/wasn't live-tested. See
-> [Scope](#scope--roadmap) for what's still ahead in Phase 3.
+> **Current status: Phase 3 — Open-Source Polish and Release Readiness.**
+> The deterministic scanner (Phase 1) and the local AI layer (Phase 2)
+> are both complete. Phase 3 adds a public landing page, a one-click
+> hosted demo deployment, contributor documentation, and release polish.
+> See [docs/ai-model.md](./docs/ai-model.md) for exactly what AI model is
+> used and its license, and [Scope](#scope--roadmap) for what's still
+> optional/ahead.
+
+## Try it
+
+| | |
+| --- | --- |
+| **Live demo** (no install) | Open the deployed URL (see your Vercel project, or ask whoever deployed this instance). The landing page explains how it works; click **Try the live demo** to reach the dashboard. The deterministic scanner, findings, and report export all work fully there. The AI badge will honestly show **"AI: unavailable"** on the hosted demo, since it has no local Ollama instance attached (see [Local vs. deployed](#local-vs-deployed) below). |
+| **Run it locally** (full features, incl. AI) | See [Quick start](#quick-start) below. Two terminals, no accounts, and optionally a local [Ollama](https://ollama.com) model for real AI explanations. |
+| **Deploy your own instance** | See [DEPLOYMENT.md](./DEPLOYMENT.md) for the exact Vercel setup (single project, frontend + API on one domain). |
+
+### Local vs. deployed
+
+These are genuinely different experiences, on purpose:
+
+- **Local:** both the deterministic scanner and the AI layer (if you run
+  Ollama) work. This is the only way to see real AI explanations today,
+  since the AI layer is local-only by design (no paid API, no sending
+  your repository to a third party).
+- **Deployed (e.g. Vercel):** the deterministic scanner, upload flow,
+  demo repository, findings UI, and Markdown export all work exactly the
+  same. The AI layer will report itself as unavailable, honestly, because
+  a hosted serverless function cannot reach a model running on your own
+  machine.
 
 ## What RepoMedic AI is not
 
@@ -43,7 +63,9 @@ npm run dev:server
 npm run dev:client
 ```
 
-Open `http://localhost:5173`. Click **Load demo repository** to run the
+Open `http://localhost:5173` — you'll land on the public landing page.
+Click **Try the live demo** (or go straight to `http://localhost:5173/app`)
+to reach the working dashboard. Click **Load demo repository** to run the
 scanner against a small bundled Node.js project, or upload your own
 `.zip` archive.
 
@@ -51,6 +73,8 @@ Copy `.env.example` to `.env` if you want to override any default limit
 (upload size, extracted-size cap, file-count cap, per-file size cap, the
 port, or the AI model settings below). No real credentials belong in
 `.env` — there is no API key to configure; the AI layer is local-only.
+Everything in `.env` is optional — sensible defaults apply with no file
+at all.
 
 To use the AI layer (optional — the app works fully without it), install
 [Ollama](https://ollama.com) and pull the default model:
@@ -79,20 +103,25 @@ npm run build          # builds the client (dist/) via Vite
 
 The server has no separate build step — `npm run dev:server` (watch
 mode) or `node server/src/index.js` (production) both run it directly
-since it is plain ESM JavaScript.
+since it is plain ESM JavaScript. For a hosted deployment, see
+[DEPLOYMENT.md](./DEPLOYMENT.md) (Vercel: frontend + API as one project).
 
 ## Architecture
 
 ```
 repomedic-ai/
+  api/
+    index.js          Vercel serverless entry point (re-exports server/src/app.js)
   client/             React + Vite + Tailwind CSS SPA
     src/
-      components/     Shared UI (Sidebar, Topbar, badges, Button, Toast...)
+      components/     Shared UI (Sidebar, Topbar, badges, Button, CodeBlock, Toast...)
       features/       Feature-scoped logic:
         scan/            Scan workflow context, upload dropzone
         findings/        Finding card/list rendering
         ai/              AI status badge, AI context, AI insight section
-      pages/          Route-level pages (Overview, Scan, Findings, Reports, About)
+      pages/          Route-level pages:
+                       LandingPage (public, at "/")
+                       Overview/Scan/Findings/Reports/About (dashboard, at "/app/*")
       lib/             API client
       styles/         Tailwind entry + design tokens (@theme)
   server/             Node.js + Express API
@@ -110,7 +139,12 @@ repomedic-ai/
     schemas/          Zod schemas: Finding, Evidence, ScanResult, AiInsight, enums
     report/           Markdown report generator (single source of truth)
   docs/
-    ai-model.md       Exact AI model, license, local setup, data handling
+    ai-model.md        Exact AI model, license, local setup, data handling
+    adding-a-rule.md   Scanner rule authoring guide
+    model-adapter.md   Guide for adding a new AI provider adapter
+    release-checklist.md
+  vercel.json          Deployment config (see DEPLOYMENT.md)
+  DEPLOYMENT.md         Step-by-step Vercel deployment walkthrough
 ```
 
 This is an **npm workspaces** monorepo (`client`, `server`, `shared`).
@@ -265,12 +299,18 @@ during development.
 
 - **Phase 1 (complete):** deterministic scanner, safe upload, demo
   repository, findings UI, Markdown export. Works fully without AI.
-- **Phase 2 (this build):** Ollama-compatible local model adapter, AI
+- **Phase 2 (complete):** Ollama-compatible local model adapter, AI
   explanations/prioritization/remediation for existing findings,
   contributor-ready issue drafts, Zod-validated AI responses, graceful
   fallback when the model is unavailable or its response is malformed.
-- **Phase 3 (not started):** expanded contributor docs, accessibility
-  audit, finalized license/attribution, issue/PR templates, polish.
+- **Phase 3 (this build):** public landing page explaining the product
+  and linking to both the live demo and local setup; a single-project
+  Vercel deployment (frontend + API, same domain); contributor docs
+  (scanner rule authoring guide, model-adapter guide, `CONTRIBUTING.md`,
+  `CODE_OF_CONDUCT.md`, issue/PR templates); an accessibility pass;
+  expanded regression tests; a `NOTICE` file for third-party attribution;
+  and a release checklist. Deployment is genuinely live-able (see
+  [DEPLOYMENT.md](./DEPLOYMENT.md)), not just "prepared but unverified."
 
 ## Known limitations & decisions (for your review)
 
@@ -326,6 +366,23 @@ during development.
   (`MAX_FINDINGS_PER_REQUEST` in `promptBuilder.js`); a scan with more
   findings than that will only receive AI insights for the first 25 in
   the current implementation.
+- **No real Vercel deployment was performed while building this** (no
+  account/token available in this environment). The deployment config
+  was written directly from Vercel's current official documentation and
+  the exact file Vercel deploys (`api/index.js`) is tested end-to-end
+  with real HTTP requests (`server/test/vercelEntry.test.js`), but the
+  platform-specific rewrite/bundling behavior has not been exercised
+  against the real platform. See [DEPLOYMENT.md](./DEPLOYMENT.md#what-wasnt-live-verified)
+  for the full, honest account and a troubleshooting section.
+- **Live-demo upload size is intentionally smaller than local** (4 MB vs
+  25 MB by default) because Vercel Functions hard-cap request bodies at
+  4.5 MB with no override available on standard Functions. This is
+  surfaced truthfully in the UI via `VITE_MAX_UPLOAD_SIZE_MB`, not hidden.
+- **No automated accessibility testing tool was added** (e.g. axe-core);
+  the accessibility pass in this phase was a manual audit (keyboard
+  navigation, focus rings, contrast, aria-labels). Automated a11y testing
+  is a reasonable follow-up, deliberately not added without verifying a
+  current, well-maintained package first.
 
 ## License
 

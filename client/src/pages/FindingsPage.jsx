@@ -79,7 +79,7 @@ export function FindingsPage() {
             icon={FolderSearch}
             title="No scan results yet"
             description="Scan a repository or load the demo repository to see findings here."
-            action={<Button onClick={() => navigate("/scan")}>Scan Repository</Button>}
+            action={<Button onClick={() => navigate("/app/scan")}>Scan Repository</Button>}
           />
         </main>
       </>
@@ -137,6 +137,8 @@ export function FindingsPage() {
               <button
                 key={level}
                 type="button"
+                aria-pressed={severityFilter.has(level)}
+                aria-label={`Filter by ${level} severity (${severityCounts[level]} findings)`}
                 onClick={() => setSeverityFilter((prev) => toggleInSet(prev, level))}
                 className={`rounded-lg border px-3 py-2 text-left transition-colors duration-150 ${
                   severityFilter.has(level)
@@ -176,6 +178,7 @@ export function FindingsPage() {
               <button
                 key={category}
                 type="button"
+                aria-pressed={categoryFilter.has(category)}
                 onClick={() => setCategoryFilter((prev) => toggleInSet(prev, category))}
                 className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors duration-150 ${
                   categoryFilter.has(category)
